@@ -1,0 +1,17 @@
+{
+  "name": "jason-fallon-hubspot-agent",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Portal-guarded, read-only HubSpot agent and Claude handoff for Jason Fallon / Momentum 360.",
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "node --test",
+    "check": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./agent/Invoke-JasonHubSpotAgent.ps1 check-token",
+    "verify": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./agent/Invoke-JasonHubSpotAgent.ps1 verify-ready",
+    "snapshot": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./agent/Invoke-JasonHubSpotAgent.ps1 snapshot",
+    "audit": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./agent/Invoke-JasonHubSpotAgent.ps1 attribution-audit"
+  }
+}
