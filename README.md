@@ -14,6 +14,7 @@ This repository gives Codex and Claude the same:
 - Slack and document-derived operating requirements
 - customer-agent and CallRail boundaries
 - other-computer setup
+- original Slack reporting PDFs and brief under `source-documents/`
 
 It intentionally does not contain a HubSpot token, DPAPI blob, cookie, password, one-time code, raw CRM export, or contact-level lead data.
 

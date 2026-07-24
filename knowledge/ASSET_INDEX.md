@@ -12,7 +12,7 @@ This index contains non-secret Slack identifiers and file names. Slack access is
 | Momentum 360 Account Manager Reporting OS - Master Multi-Agent Prompt | `F0BJVGFU5H9` | 2026-07-22 |
 | Momentum 360 AM Dashboard - Shorter Build Prompt | `F0BKJK2CA3E` | 2026-07-23 |
 
-The two PDFs were read completely during the 2026-07-23 repair. Their operational requirements are normalized in `REPORTING_REQUIREMENTS.md`.
+The two PDFs were read completely during the 2026-07-23 repair. Their operational requirements are normalized in `REPORTING_REQUIREMENTS.md`. The original PDFs and reporting DOCX are included under `source-documents/` in the private repository.
 
 ## Case-study bundle
 
