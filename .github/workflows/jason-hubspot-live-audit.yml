@@ -1,0 +1,90 @@
+name: Jason HubSpot Live Audit
+
+on:
+  workflow_dispatch:
+    inputs:
+      command:
+        description: Read-only Jason/Momentum audit to run
+        required: true
+        default: all
+        type: choice
+        options:
+          - all
+          - verify-ready
+          - snapshot
+          - schema-audit
+          - attribution-audit
+
+permissions:
+  contents: read
+
+concurrency:
+  group: jason-hubspot-live-audit
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    name: Portal 50612503 read-only audit
+    runs-on: windows-latest
+    timeout-minutes: 20
+    env:
+      JASON_HUBSPOT_PRIVATE_APP_TOKEN: ${{ secrets.JASON_HUBSPOT_PRIVATE_APP_TOKEN }}
+
+    steps:
+      - name: Check out agent
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Run safety tests
+        run: npm test
+
+      - name: Run portal-guarded live audit
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          if ([string]::IsNullOrWhiteSpace($env:JASON_HUBSPOT_PRIVATE_APP_TOKEN)) {
+            throw "The JASON_HUBSPOT_PRIVATE_APP_TOKEN Actions secret is unavailable."
+          }
+
+          node .\agent\jason-hubspot-agent.mjs verify-ready
+          if ($LASTEXITCODE -ne 0) {
+            throw "Portal readiness verification failed."
+          }
+
+          switch ("${{ inputs.command }}") {
+            "all" {
+              node .\agent\jason-hubspot-agent.mjs snapshot
+              if ($LASTEXITCODE -ne 0) { throw "Snapshot failed." }
+              node .\agent\jason-hubspot-agent.mjs schema-audit
+              if ($LASTEXITCODE -ne 0) { throw "Schema audit failed." }
+              node .\agent\jason-hubspot-agent.mjs attribution-audit
+              if ($LASTEXITCODE -ne 0) { throw "Attribution audit failed." }
+            }
+            "snapshot" {
+              node .\agent\jason-hubspot-agent.mjs snapshot
+              if ($LASTEXITCODE -ne 0) { throw "Snapshot failed." }
+            }
+            "schema-audit" {
+              node .\agent\jason-hubspot-agent.mjs schema-audit
+              if ($LASTEXITCODE -ne 0) { throw "Schema audit failed." }
+            }
+            "attribution-audit" {
+              node .\agent\jason-hubspot-agent.mjs attribution-audit
+              if ($LASTEXITCODE -ne 0) { throw "Attribution audit failed." }
+            }
+          }
+
+          "Live read-only audit completed for Jason/Momentum portal 50612503." |
+            Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY
+
+      - name: Upload aggregate audit outputs
+        uses: actions/upload-artifact@v4
+        with:
+          name: jason-hubspot-${{ inputs.command }}-${{ github.run_id }}
+          path: outputs/
+          if-no-files-found: error
+          retention-days: 14
