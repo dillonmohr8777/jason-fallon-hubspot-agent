@@ -45,6 +45,15 @@ Windows DPAPI credentials are machine/user local and are never committed. The se
 
 If the other computer cannot obtain the token, Claude still has the complete operating context and can run tests, but live HubSpot commands remain correctly blocked.
 
+## Claude in a remote or cloud session
+
+Use the repository's manual `Jason HubSpot Live Audit` GitHub Actions workflow. The workflow
+receives the Jason credential from the protected `JASON_HUBSPOT_PRIVATE_APP_TOKEN` repository
+secret, verifies portal `50612503`, and runs only the read-only aggregate commands.
+
+The secret is not stored in Git and cannot be read back from GitHub. Forked pull requests do
+not receive it. Live outputs are uploaded as 14-day aggregate audit artifacts.
+
 ## Read first
 
 1. `CLAUDE.md`

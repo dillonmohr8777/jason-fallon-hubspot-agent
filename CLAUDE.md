@@ -21,6 +21,25 @@ npm test
 .\agent\Invoke-JasonHubSpotAgent.ps1 verify-ready
 ```
 
+## Remote or cloud Claude execution
+
+The public repository has a manual GitHub Actions workflow named `Jason HubSpot Live Audit`.
+Use it when the Claude session does not run on a Windows computer holding the local DPAPI
+credential. The repository secret `JASON_HUBSPOT_PRIVATE_APP_TOKEN` is injected only into
+that workflow and is never readable from repository files or workflow output.
+
+Available workflow choices:
+
+- `all`
+- `verify-ready`
+- `snapshot`
+- `schema-audit`
+- `attribution-audit`
+
+The workflow is read-only, verifies portal `50612503` first, and uploads only aggregate
+PII-safe JSON outputs as a short-lived Actions artifact. Never attempt to print, return,
+decode, or otherwise reveal the repository secret.
+
 ## Non-negotiable routing
 
 - The only allowed portal is `50612503`.
