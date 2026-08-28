@@ -11,6 +11,8 @@ on:
         options:
           - all
           - verify-ready
+          - window-report
+          - daily-health
           - snapshot
           - schema-audit
           - attribution-audit
@@ -59,10 +61,22 @@ jobs:
             "all" {
               node .\agent\jason-hubspot-agent.mjs snapshot
               if ($LASTEXITCODE -ne 0) { throw "Snapshot failed." }
+              node .\agent\jason-hubspot-agent.mjs window-report
+              if ($LASTEXITCODE -ne 0) { throw "Window report failed." }
+              node .\agent\jason-hubspot-agent.mjs daily-health
+              if ($LASTEXITCODE -ne 0) { throw "Daily health failed." }
               node .\agent\jason-hubspot-agent.mjs schema-audit
               if ($LASTEXITCODE -ne 0) { throw "Schema audit failed." }
               node .\agent\jason-hubspot-agent.mjs attribution-audit
               if ($LASTEXITCODE -ne 0) { throw "Attribution audit failed." }
+            }
+            "window-report" {
+              node .\agent\jason-hubspot-agent.mjs window-report
+              if ($LASTEXITCODE -ne 0) { throw "Window report failed." }
+            }
+            "daily-health" {
+              node .\agent\jason-hubspot-agent.mjs daily-health
+              if ($LASTEXITCODE -ne 0) { throw "Daily health failed." }
             }
             "snapshot" {
               node .\agent\jason-hubspot-agent.mjs snapshot

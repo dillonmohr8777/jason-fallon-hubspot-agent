@@ -4,7 +4,15 @@ import test from "node:test";
 import {
   EXPECTED_PORTAL_ID,
   HubSpotClient,
+  buildWindowReport,
+  callRailWindowFilterGroups,
   classifyContact,
+  computeReadinessStatus,
+  coveragePercent,
+  createdateWindowFilters,
+  dailyHealth,
+  defaultReportingWindow,
+  statusReasons,
   verifyReady,
 } from "../agent/jason-hubspot-agent.mjs";
 
@@ -53,6 +61,28 @@ test("ignores generic HubSpot environment variables", () => {
   }
 });
 
+test("searchTotal sends date-window filters on the read-only search POST", async () => {
+  let captured = null;
+  const client = new HubSpotClient({
+    token: "test-token",
+    fetchImpl: async (url, init) => {
+      captured = { url: String(url), ...init };
+      return response({ total: 16 });
+    },
+  });
+  const startMs = Date.parse("2026-08-27T13:00:07.000Z");
+  const endMs = Date.parse("2026-08-28T13:00:07.000Z");
+  const total = await client.searchTotal("contacts", {
+    filters: createdateWindowFilters(startMs, endMs),
+  });
+  assert.equal(total, 16);
+  assert.match(captured.url, /\/crm\/v3\/objects\/contacts\/search$/);
+  assert.equal(captured.method, "POST");
+  assert.deepEqual(JSON.parse(captured.body).filterGroups, [{
+    filters: createdateWindowFilters(startMs, endMs),
+  }]);
+});
+
 test("allows POST only for read-only search endpoints", async () => {
   const client = new HubSpotClient({
     token: "test-token",
@@ -74,9 +104,128 @@ test("readiness fails when a required probe fails", async () => {
     }),
   };
   const result = await verifyReady(client);
+  assert.equal(result.status, "unavailable");
   assert.equal(result.readyForReadReporting, false);
   assert.deepEqual(result.requiredFailures.map((item) => item.name), ["forms"]);
+  assert.deepEqual(result.statusReasons, ["forms: required probe failed"]);
   assert.equal(result.readyForWrites, false);
+});
+
+test("readiness is degraded when only optional probes fail", async () => {
+  const client = {
+    validatePortal: async () => ({ portalId: EXPECTED_PORTAL_ID }),
+    probe: async (name, _endpoint, required) => ({
+      name,
+      required,
+      ok: !(name === "conversations"),
+    }),
+  };
+  const result = await verifyReady(client);
+  assert.equal(result.status, "degraded");
+  assert.equal(result.readyForReadReporting, true);
+  assert.deepEqual(result.requiredFailures, []);
+  assert.deepEqual(result.optionalFailures.map((item) => item.name), ["conversations"]);
+  assert.deepEqual(result.statusReasons, ["conversations: optional probe failed"]);
+  assert.equal(result.readyForWrites, false);
+});
+
+test("readiness is ready when every probe passes", async () => {
+  const client = {
+    validatePortal: async () => ({ portalId: EXPECTED_PORTAL_ID }),
+    probe: async (name, _endpoint, required) => ({
+      name,
+      required,
+      ok: true,
+    }),
+  };
+  const result = await verifyReady(client);
+  assert.equal(result.status, "ready");
+  assert.equal(result.readyForReadReporting, true);
+  assert.deepEqual(result.statusReasons, []);
+});
+
+test("computeReadinessStatus keeps missing values out of the ready state", () => {
+  assert.equal(computeReadinessStatus([], []), "ready");
+  assert.equal(computeReadinessStatus([], [{ name: "conversations" }]), "degraded");
+  assert.equal(computeReadinessStatus([{ name: "forms" }], [{ name: "conversations" }]), "unavailable");
+  assert.deepEqual(
+    statusReasons([{ name: "forms" }], [{ name: "conversations" }]),
+    ["forms: required probe failed", "conversations: optional probe failed"],
+  );
+});
+
+test("date-window helpers stay explicit and do not invent coverage", () => {
+  const startMs = Date.parse("2026-08-27T13:00:07.000Z");
+  const endMs = Date.parse("2026-08-28T13:00:07.000Z");
+  assert.deepEqual(createdateWindowFilters(startMs, endMs), [
+    { propertyName: "createdate", operator: "GTE", value: String(startMs) },
+    { propertyName: "createdate", operator: "LT", value: String(endMs) },
+  ]);
+  const groups = callRailWindowFilterGroups(startMs, endMs, { requireOwner: true });
+  assert.equal(groups.length, 3);
+  assert.ok(groups.every((group) => group.filters.some((filter) => filter.propertyName === "hubspot_owner_id")));
+  assert.deepEqual(coveragePercent(11, 0), 0);
+  assert.deepEqual(coveragePercent(0, 0), { unavailable: true, reason: "denominator is zero" });
+  assert.deepEqual(coveragePercent({ unavailable: true }, 0), { unavailable: true });
+  const window = defaultReportingWindow(new Date("2026-08-28T13:00:07.000Z"));
+  assert.equal(window.timezone, "America/New_York");
+  assert.equal(window.endAt, "2026-08-28T13:00:07.000Z");
+  assert.equal(window.startAt, "2026-08-27T13:00:07.000Z");
+});
+
+test("window report uses date filters and keeps failed totals unavailable", async () => {
+  const startMs = Date.parse("2026-08-27T13:00:07.000Z");
+  const endMs = Date.parse("2026-08-28T13:00:07.000Z");
+  const calls = [];
+  const client = {
+    validatePortal: async () => ({ portalId: EXPECTED_PORTAL_ID }),
+    searchTotal: async (objectType, options = {}) => {
+      calls.push({ objectType, options });
+      if (objectType === "meetings") throw new Error("HubSpot 403 MISSING_SCOPES: meetings");
+      if (options.filterGroups) {
+        const ownerRequired = options.filterGroups.some((group) => (
+          group.filters.some((filter) => filter.propertyName === "hubspot_owner_id")
+        ));
+        return ownerRequired ? 0 : 11;
+      }
+      return objectType === "contacts" ? 16 : 1;
+    },
+  };
+  const report = await buildWindowReport(client, { startMs, endMs });
+  assert.equal(report.createdInWindow.contacts, 16);
+  assert.deepEqual(report.createdInWindow.meetings, {
+    unavailable: true,
+    error: "HubSpot 403 MISSING_SCOPES: meetings",
+  });
+  assert.equal(report.callRail.ingestions, 11);
+  assert.equal(report.callRail.ownerAssigned, 0);
+  assert.equal(report.callRail.ownerCoveragePercent, 0);
+  assert.equal(report.createdVersusUpdatedSplit.contactsCreated, 16);
+  assert.ok(calls.some((call) => call.options.filters?.[0]?.propertyName === "createdate"));
+  assert.ok(calls.some((call) => Array.isArray(call.options.filterGroups)));
+});
+
+test("daily health carries the degraded status and the date-window report", async () => {
+  const client = {
+    validatePortal: async () => ({ portalId: EXPECTED_PORTAL_ID }),
+    probe: async (name, _endpoint, required) => ({
+      name,
+      required,
+      ok: name !== "conversations",
+    }),
+    searchTotal: async () => 0,
+  };
+  const result = await dailyHealth(client, {
+    startMs: Date.parse("2026-08-27T13:00:07.000Z"),
+    endMs: Date.parse("2026-08-28T13:00:07.000Z"),
+  });
+  assert.equal(result.status, "degraded");
+  assert.equal(result.readyForReadReporting, true);
+  assert.equal(result.readyForWrites, false);
+  assert.equal(result.portalId, EXPECTED_PORTAL_ID);
+  assert.match(result.reportId, /^M360-DAILY-\d{4}-\d{2}-\d{2}$/);
+  assert.equal(result.window.createdInWindow.contacts, 0);
+  assert.equal(result.window.callRail.ownerCoveragePercent.unavailable, true);
 });
 
 test("normalizes known channel signals and preserves ambiguity", () => {

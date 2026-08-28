@@ -1,6 +1,6 @@
 # Jason Fallon / Momentum 360 HubSpot operating model
 
-Updated: 2026-07-23
+Updated: 2026-08-28
 
 ## Identity and access
 
@@ -77,6 +77,14 @@ Historical probes showed:
 - CRM reads: available
 
 The current readiness command rechecks those endpoints as optional probes. A failure remains visible. It must not be treated as permission to bypass HubSpot controls.
+
+Daily health uses three statuses:
+
+- `ready`: required and optional probes passed
+- `degraded`: required CRM reads passed, but Conversations, workflows, or another optional probe failed
+- `unavailable`: a required probe failed or the portal guard failed
+
+`window-report` and `daily-health` now produce the last-24-hour America/New_York created-count and CallRail owner-coverage aggregates. They still withhold conversations, handoffs, tickets, and workflow enrollment outcomes when those endpoints fail. Customer Agent UI, chatflow `96377499` live settings, and CallRail membership remain human-gated and cannot be flipped to ready from this repository.
 
 ## Business state model
 

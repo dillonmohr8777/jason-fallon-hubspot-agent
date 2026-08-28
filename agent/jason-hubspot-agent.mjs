@@ -24,12 +24,22 @@ const REQUIRED_PROBES = [
   ["dealSchema", "/crm/v3/properties/deals"],
 ];
 
+const ALERT_WORKFLOW_ID = "1865051017";
+const REPORTING_TIMEZONE = "America/New_York";
+const WINDOW_OBJECT_TYPES = ["contacts", "companies", "deals", "calls", "meetings", "tasks"];
+const CALLRAIL_CONTACT_PROPERTIES = [
+  "first_tracking_number_contacted",
+  "last_tracking_number_contacted",
+  "callrail_source",
+];
+
 const OPTIONAL_PROBES = [
   ["leads", "/crm/v3/objects/leads?limit=1&archived=false"],
   ["callSchema", "/crm/v3/properties/calls"],
   ["meetingSchema", "/crm/v3/properties/meetings"],
   ["conversations", "/conversations/v3/conversations/threads?limit=1"],
-  ["workflows", "/automation/v3/workflows?limit=1"],
+  ["workflows", "/automation/v4/flows?limit=1"],
+  ["alertWorkflow", `/automation/v4/flows/${ALERT_WORKFLOW_ID}`],
 ];
 
 const CONTACT_PROPERTY_CANDIDATES = [
@@ -145,6 +155,94 @@ function parseArgs(argv) {
     }
   }
   return options;
+}
+
+function parseTimestampOption(value) {
+  if (value === undefined || value === null || value === true) return null;
+  const numeric = Number(value);
+  if (Number.isFinite(numeric) && String(value).trim() !== "") return numeric;
+  const parsed = Date.parse(String(value));
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+export function computeReadinessStatus(requiredFailures, optionalFailures) {
+  if (requiredFailures.length > 0) return "unavailable";
+  if (optionalFailures.length > 0) return "degraded";
+  return "ready";
+}
+
+export function statusReasons(requiredFailures = [], optionalFailures = []) {
+  return [
+    ...requiredFailures.map((probe) => `${probe.name}: required probe failed`),
+    ...optionalFailures.map((probe) => `${probe.name}: optional probe failed`),
+  ];
+}
+
+export function defaultReportingWindow(now = new Date()) {
+  const endMs = now.getTime();
+  const startMs = endMs - 24 * 60 * 60 * 1000;
+  return {
+    timezone: REPORTING_TIMEZONE,
+    startMs,
+    endMs,
+    startAt: new Date(startMs).toISOString(),
+    endAt: new Date(endMs).toISOString(),
+  };
+}
+
+export function createdateWindowFilters(startMs, endMs) {
+  return [
+    { propertyName: "createdate", operator: "GTE", value: String(startMs) },
+    { propertyName: "createdate", operator: "LT", value: String(endMs) },
+  ];
+}
+
+export function lastmodifiedWindowFilters(startMs, endMs) {
+  return [
+    { propertyName: "lastmodifieddate", operator: "GTE", value: String(startMs) },
+    { propertyName: "lastmodifieddate", operator: "LT", value: String(endMs) },
+  ];
+}
+
+export function callRailWindowFilterGroups(startMs, endMs, { requireOwner = false } = {}) {
+  const ownerFilter = requireOwner
+    ? [{ propertyName: "hubspot_owner_id", operator: "HAS_PROPERTY" }]
+    : [];
+  return CALLRAIL_CONTACT_PROPERTIES.map((propertyName) => ({
+    filters: [
+      ...createdateWindowFilters(startMs, endMs),
+      ...ownerFilter,
+      { propertyName, operator: "HAS_PROPERTY" },
+    ],
+  }));
+}
+
+export function coveragePercent(total, matched) {
+  if (typeof total !== "number" || typeof matched !== "number") {
+    return { unavailable: true };
+  }
+  if (total === 0) {
+    return { unavailable: true, reason: "denominator is zero" };
+  }
+  return Math.round((matched / total) * 10_000) / 100;
+}
+
+function windowOptionsFromArgs(options) {
+  const startMs = parseTimestampOption(options.start ?? options["start-ms"]);
+  const endMs = parseTimestampOption(options.end ?? options["end-ms"]);
+  const parsed = {};
+  if (startMs !== null) parsed.startMs = startMs;
+  if (endMs !== null) parsed.endMs = endMs;
+  if (typeof options.timezone === "string") parsed.timezone = options.timezone;
+  return parsed;
+}
+
+async function countedResult(runner) {
+  try {
+    return await runner();
+  } catch (error) {
+    return { unavailable: true, error: safeErrorMessage(error) };
+  }
 }
 
 export class HubSpotClient {
@@ -274,10 +372,13 @@ export class HubSpotClient {
     return total;
   }
 
-  async searchTotal(objectType) {
+  async searchTotal(objectType, options = {}) {
+    const filters = options.filters ?? [];
+    const filterGroups = options.filterGroups
+      ?? (filters.length ? [{ filters }] : []);
     const data = await this.request(`/crm/v3/objects/${objectType}/search`, {
       method: "POST",
-      body: { filterGroups: [], sorts: [], properties: [], limit: 1, after: 0 },
+      body: { filterGroups, sorts: [], properties: [], limit: 1, after: 0 },
     });
     return roundWhole(data?.total);
   }
@@ -309,6 +410,8 @@ export async function verifyReady(client) {
     mode: "read-only",
     identity,
     runtime,
+    status: computeReadinessStatus(requiredFailures, optionalFailures),
+    statusReasons: statusReasons(requiredFailures, optionalFailures),
     readyForReadReporting: requiredFailures.length === 0,
     readyForWrites: false,
     requiredFailures,
@@ -318,6 +421,7 @@ export async function verifyReady(client) {
       "No CRM, schema, workflow, form, dashboard, customer-agent, email, SMS, or ownership writes are implemented.",
       "Optional scope failures remain visible and are not bypassed.",
       "HubSpot native connector portal 242825734 is not an approved access path for this agent.",
+      "status=degraded means required CRM reads passed and at least one optional probe failed. It is not permission to invent those values as zero.",
     ],
   };
 }
@@ -357,6 +461,97 @@ export async function buildSnapshot(client) {
       "Counts describe current HubSpot objects, not verified leads or conversions.",
       "Qualification, deduplication, spam exclusion, and campaign mapping require approved definitions.",
     ],
+  };
+}
+
+export async function buildWindowReport(client, options = {}) {
+  const identity = await client.validatePortal();
+  const hasExplicitWindow = Number.isFinite(options.startMs) && Number.isFinite(options.endMs);
+  const window = hasExplicitWindow
+    ? {
+      timezone: options.timezone || REPORTING_TIMEZONE,
+      startMs: Number(options.startMs),
+      endMs: Number(options.endMs),
+      startAt: new Date(Number(options.startMs)).toISOString(),
+      endAt: new Date(Number(options.endMs)).toISOString(),
+    }
+    : defaultReportingWindow();
+
+  const createdInWindow = {};
+  for (const objectType of WINDOW_OBJECT_TYPES) {
+    createdInWindow[objectType] = await countedResult(() => client.searchTotal(objectType, {
+      filters: createdateWindowFilters(window.startMs, window.endMs),
+    }));
+  }
+
+  const contactsUpdatedInWindow = await countedResult(() => client.searchTotal("contacts", {
+    filters: lastmodifiedWindowFilters(window.startMs, window.endMs),
+  }));
+  const createdVersusUpdatedAvailable = typeof createdInWindow.contacts === "number"
+    && typeof contactsUpdatedInWindow === "number";
+
+  const callRailIngestions = await countedResult(() => client.searchTotal("contacts", {
+    filterGroups: callRailWindowFilterGroups(window.startMs, window.endMs),
+  }));
+  const callRailOwnerAssigned = await countedResult(() => client.searchTotal("contacts", {
+    filterGroups: callRailWindowFilterGroups(window.startMs, window.endMs, { requireOwner: true }),
+  }));
+
+  return {
+    generatedAt: timestamp(),
+    mode: "read-only date-window aggregate",
+    piiIncluded: false,
+    identity,
+    window,
+    createdInWindow,
+    contactsUpdatedInWindow,
+    createdVersusUpdatedSplit: createdVersusUpdatedAvailable
+      ? {
+        contactsCreated: createdInWindow.contacts,
+        contactsUpdated: contactsUpdatedInWindow,
+        note: "Updated counts include records whose lastmodifieddate falls in the window, including records also created in the window.",
+      }
+      : {
+        unavailable: true,
+        reason: "Created or updated contact totals were unavailable.",
+      },
+    callRail: {
+      ingestions: callRailIngestions,
+      ownerAssigned: callRailOwnerAssigned,
+      ownerCoveragePercent: coveragePercent(callRailIngestions, callRailOwnerAssigned),
+    },
+    withheld: [
+      "Conversations, handoffs, Help Desk tickets, and workflow enrollment outcomes stay withheld unless those endpoints succeed.",
+      "Missing values remain unavailable, never zero.",
+    ],
+  };
+}
+
+export async function dailyHealth(client, options = {}) {
+  const readiness = await verifyReady(client);
+  const window = await buildWindowReport(client, options);
+  return {
+    generatedAt: timestamp(),
+    mode: "read-only daily health",
+    piiIncluded: false,
+    reportId: `M360-DAILY-${new Date().toISOString().slice(0, 10)}`,
+    account: "Jason Fallon / Momentum 360",
+    portalId: EXPECTED_PORTAL_ID,
+    status: readiness.status,
+    statusReasons: readiness.statusReasons,
+    readyForReadReporting: readiness.readyForReadReporting,
+    readyForWrites: false,
+    identity: readiness.identity,
+    runtime: readiness.runtime,
+    window,
+    requiredFailures: readiness.requiredFailures,
+    optionalFailures: readiness.optionalFailures,
+    nextHumanGates: [
+      "Grant conversations.read on the Jason/Momentum private app if Conversations remain 403.",
+      "Restore the authorized HubSpot browser session to verify Customer Agent, chatflow 96377499, capture fields, and Help Desk handoff owner.",
+      "Restore direct CallRail membership for Momentum Digital LLC account 671942387 before treating CallRail UI settings as verified.",
+    ],
+    boundaries: readiness.boundaries,
   };
 }
 
@@ -605,6 +800,14 @@ async function main() {
     case "verify-ready":
       result = await verifyReady(client);
       outputPath = await writeOutput("readiness", result);
+      break;
+    case "window-report":
+      result = await buildWindowReport(client, windowOptionsFromArgs(options));
+      outputPath = await writeOutput("window-reports", result);
+      break;
+    case "daily-health":
+      result = await dailyHealth(client, windowOptionsFromArgs(options));
+      outputPath = await writeOutput("daily-health", result);
       break;
     case "snapshot":
       result = await buildSnapshot(client);

@@ -9,9 +9,11 @@
   },
   "scripts": {
     "test": "node --test",
-    "check": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./agent/Invoke-JasonHubSpotAgent.ps1 check-token",
-    "verify": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./agent/Invoke-JasonHubSpotAgent.ps1 verify-ready",
-    "snapshot": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./agent/Invoke-JasonHubSpotAgent.ps1 snapshot",
-    "audit": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./agent/Invoke-JasonHubSpotAgent.ps1 attribution-audit"
+    "check": "node ./agent/jason-hubspot-agent.mjs check-token",
+    "verify": "node ./agent/jason-hubspot-agent.mjs verify-ready",
+    "window": "node ./agent/jason-hubspot-agent.mjs window-report",
+    "health": "node ./agent/jason-hubspot-agent.mjs daily-health",
+    "snapshot": "node ./agent/jason-hubspot-agent.mjs snapshot",
+    "audit": "node ./agent/jason-hubspot-agent.mjs attribution-audit"
   }
 }

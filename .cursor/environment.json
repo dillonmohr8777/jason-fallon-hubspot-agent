@@ -1,0 +1,3 @@
+{
+  "install": "node --check agent/jason-hubspot-agent.mjs"
+}

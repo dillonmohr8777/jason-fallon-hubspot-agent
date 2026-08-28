@@ -22,12 +22,15 @@ It intentionally does not contain a HubSpot token, DPAPI blob, cookie, password,
 
 ```powershell
 npm test
-.\agent\Invoke-JasonHubSpotAgent.ps1 check-token
-.\agent\Invoke-JasonHubSpotAgent.ps1 verify-ready
-.\agent\Invoke-JasonHubSpotAgent.ps1 snapshot
-.\agent\Invoke-JasonHubSpotAgent.ps1 schema-audit
-.\agent\Invoke-JasonHubSpotAgent.ps1 attribution-audit
+npm run check
+npm run verify
+npm run window
+npm run health
+npm run snapshot
+npm run audit
 ```
+
+Windows DPAPI token loading still goes through `.\agent\Invoke-JasonHubSpotAgent.ps1`. Cloud and Linux sessions should call the `npm run` scripts after `JASON_HUBSPOT_PRIVATE_APP_TOKEN` is already in the environment.
 
 The launcher can use the existing protected Jason token on Dillon's current Windows profile. It never accepts the generic Align environment variable.
 
@@ -66,6 +69,11 @@ not receive it. Live outputs are uploaded as 14-day aggregate audit artifacts.
 
 ## Status semantics
 
-- `readyForReadReporting: true` means the token matched portal `50612503` and every required read endpoint passed.
-- Optional failures such as Conversations or Workflows describe scope/product gaps; they do not grant permission to work around those gaps.
+- `status` is `ready`, `degraded`, or `unavailable`.
+- `ready` means the token matched portal `50612503` and every required and optional probe passed.
+- `degraded` means required CRM reads passed and at least one optional probe failed. Daily Slack reports should keep this label instead of calling the portal ready.
+- `unavailable` means a required probe failed or the portal guard failed.
+- `readyForReadReporting: true` still means only that required read endpoints passed. It can be true while `status` is `degraded`.
+- Optional failures such as Conversations describe scope/product gaps; they do not grant permission to work around those gaps or to report those counts as zero.
+- `window-report` and `daily-health` provide the last-24-hour America/New_York aggregate that the older launcher was missing. Missing created-versus-updated splits, conversations, handoffs, and tickets stay unavailable.
 - No readiness result authorizes HubSpot writes.

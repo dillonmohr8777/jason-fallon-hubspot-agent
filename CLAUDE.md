@@ -17,9 +17,11 @@ Then run:
 
 ```powershell
 npm test
-.\agent\Invoke-JasonHubSpotAgent.ps1 check-token
-.\agent\Invoke-JasonHubSpotAgent.ps1 verify-ready
+npm run check
+npm run verify
 ```
+
+If the Jason token is already in `JASON_HUBSPOT_PRIVATE_APP_TOKEN`, those npm scripts work on Linux and in GitHub Actions. On Dillon's Windows profile, `.\agent\Invoke-JasonHubSpotAgent.ps1` still loads the protected DPAPI credential.
 
 ## Remote or cloud Claude execution
 
@@ -32,6 +34,8 @@ Available workflow choices:
 
 - `all`
 - `verify-ready`
+- `window-report`
+- `daily-health`
 - `snapshot`
 - `schema-audit`
 - `attribution-audit`
@@ -67,6 +71,7 @@ decode, or otherwise reveal the repository secret.
 ## Useful commands
 
 ```powershell
+npm run health
 .\agent\Invoke-JasonHubSpotAgent.ps1 context
 .\agent\Invoke-JasonHubSpotAgent.ps1 snapshot
 .\agent\Invoke-JasonHubSpotAgent.ps1 schema-audit

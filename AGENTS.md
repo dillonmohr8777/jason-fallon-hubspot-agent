@@ -26,9 +26,13 @@ Run through `agent/Invoke-JasonHubSpotAgent.ps1`:
 
 - `check-token`
 - `verify-ready`
+- `window-report`
+- `daily-health`
 - `snapshot`
 - `schema-audit`
 - `attribution-audit`
 - `context`
 
-Before calling the agent ready, run `npm test` and `npm run verify`.
+On Linux or in GitHub Actions, the same commands run through `node ./agent/jason-hubspot-agent.mjs`.
+
+Before calling the agent ready, run `npm test` and `npm run verify`. `readyForReadReporting: true` is not the same as `status: ready`. If Conversations or another optional probe fails, the status is `degraded`.
