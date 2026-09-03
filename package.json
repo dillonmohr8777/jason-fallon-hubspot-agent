@@ -14,6 +14,7 @@
     "window": "node ./agent/jason-hubspot-agent.mjs window-report",
     "health": "node ./agent/jason-hubspot-agent.mjs daily-health",
     "snapshot": "node ./agent/jason-hubspot-agent.mjs snapshot",
-    "audit": "node ./agent/jason-hubspot-agent.mjs attribution-audit"
+    "audit": "node ./agent/jason-hubspot-agent.mjs attribution-audit",
+    "lead-source": "node ./agent/jason-hubspot-agent.mjs lead-source-audit"
   }
 }

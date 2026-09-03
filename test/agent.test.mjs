@@ -12,7 +12,11 @@ import {
   createdateWindowFilters,
   dailyHealth,
   defaultReportingWindow,
+  distributionOf,
+  easternDay,
+  leadSourceAudit,
   statusReasons,
+  summarizeForms,
   verifyReady,
 } from "../agent/jason-hubspot-agent.mjs";
 
@@ -244,4 +248,104 @@ test("normalizes known channel signals and preserves ambiguity", () => {
   assert.equal(classifyContact({ utm_source: "youtube" }), "YouTube");
   assert.equal(classifyContact({ hs_analytics_source: "ORGANIC_SEARCH" }), "Website");
   assert.equal(classifyContact({ createdate: "2026-07-23T00:00:00Z" }), "Needs Review");
+});
+
+test("distributionOf counts blanks explicitly and sorts by frequency", () => {
+  const records = [
+    { properties: { hs_object_source_label: "INTEGRATION" } },
+    { properties: { hs_object_source_label: "INTEGRATION" } },
+    { properties: { hs_object_source_label: "FORM" } },
+    { properties: {} },
+  ];
+  const counts = distributionOf(records, (properties) => properties.hs_object_source_label);
+  assert.deepEqual(Object.keys(counts), ["INTEGRATION", "FORM", "(blank)"]);
+  assert.equal(counts.INTEGRATION, 2);
+  assert.equal(counts["(blank)"], 1);
+});
+
+test("easternDay buckets by America/New_York calendar date, not UTC", () => {
+  assert.equal(easternDay("2026-09-02T03:30:00.000Z"), "2026-09-01");
+  assert.equal(easternDay("2026-09-02T04:30:00.000Z"), "2026-09-02");
+  assert.equal(easternDay(null), "(blank)");
+  assert.equal(easternDay("not-a-date"), "(blank)");
+});
+
+test("summarizeForms keeps only non-PII configuration metadata", () => {
+  const summary = summarizeForms([
+    { id: "2", name: "Beta", formType: "HUBSPOT", archived: false, extra: "drop-me" },
+    { id: "1", name: "Alpha", formType: "FACEBOOK_LEAD_AD" },
+  ]);
+  assert.deepEqual(summary.map((form) => form.name), ["Alpha", "Beta"]);
+  assert.deepEqual(Object.keys(summary[0]).sort(), [
+    "archived", "createdAt", "formType", "id", "name", "updatedAt",
+  ]);
+});
+
+test("lead source audit filters by createdate window and emits aggregates only", async () => {
+  const calls = [];
+  const client = new HubSpotClient({
+    token: "test-token",
+    fetchImpl: async (url, init) => {
+      const href = String(url);
+      calls.push(href);
+      if (href.includes("/integrations/v1/me")) {
+        return response({ portalId: Number(EXPECTED_PORTAL_ID) });
+      }
+      if (href.includes("/crm/v3/properties/contacts")) {
+        return response({
+          results: [
+            { name: "createdate" },
+            { name: "hs_object_source_label" },
+            { name: "hs_analytics_source" },
+          ],
+        });
+      }
+      if (href.includes("/crm/v3/objects/contacts/search")) {
+        const body = JSON.parse(init.body);
+        assert.deepEqual(
+          body.filterGroups[0].filters.map((filter) => filter.propertyName),
+          ["createdate", "createdate"],
+        );
+        return response({
+          results: [
+            {
+              id: "1",
+              properties: {
+                createdate: "2026-09-02T14:00:00.000Z",
+                hs_object_source_label: "INTEGRATION",
+                hs_analytics_source: "PAID_SOCIAL",
+              },
+            },
+          ],
+        });
+      }
+      if (href.includes("/marketing/v3/forms")) {
+        return response({ results: [{ id: "9", name: "360 Contact", formType: "HUBSPOT" }] });
+      }
+      return response({ message: "not found" }, 404);
+    },
+  });
+
+  const audit = await leadSourceAudit(client, {
+    startMs: Date.parse("2026-08-31T04:00:00.000Z"),
+    endMs: Date.parse("2026-09-02T20:00:00.000Z"),
+  });
+
+  assert.equal(audit.contactsCreatedInWindow, 1);
+  assert.equal(audit.piiIncluded, false);
+  assert.deepEqual(audit.missingProperties.includes("hs_latest_source"), true);
+  assert.deepEqual(audit.distributions.byObjectSourceLabel, { INTEGRATION: 1 });
+  assert.equal(audit.forms[0].name, "360 Contact");
+  const serialized = JSON.stringify(audit);
+  assert.equal(serialized.includes("\"id\":\"1\""), false);
+  assert.equal(audit.ingestPathProbes.some((probe) => probe.ok === false), true);
+});
+
+test("distributionOf caps the long tail so record identifiers stay out of evidence", () => {
+  const records = Array.from({ length: 50 }, (_, index) => ({
+    properties: { hs_object_source_id: `guid-${index}` },
+  }));
+  const counts = distributionOf(records, (properties) => properties.hs_object_source_id, 5);
+  assert.equal(Object.keys(counts).length, 6);
+  assert.equal(counts["(other: 45 distinct values withheld)"], 45);
 });
