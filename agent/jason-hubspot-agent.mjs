@@ -383,6 +383,36 @@ export class HubSpotClient {
     return roundWhole(data?.total);
   }
 
+  async searchAll(objectType, { filters = [], properties = [], pageLimit = 100, maxRecords = 10_000 } = {}) {
+    const collected = [];
+    let after = 0;
+    while (collected.length < maxRecords) {
+      const data = await this.request(`/crm/v3/objects/${objectType}/search`, {
+        method: "POST",
+        body: { filterGroups: filters.length ? [{ filters }] : [], sorts: [], properties, limit: pageLimit, after },
+      });
+      const results = data?.results ?? [];
+      collected.push(...results);
+      const next = data?.paging?.next?.after;
+      if (!next || results.length === 0) break;
+      after = Number(next);
+    }
+    return collected;
+  }
+
+  async listForms() {
+    const forms = [];
+    let after = null;
+    do {
+      const query = new URLSearchParams({ limit: "50" });
+      if (after) query.set("after", String(after));
+      const page = await this.request(`/marketing/v3/forms/?${query}`);
+      forms.push(...(page?.results ?? []));
+      after = page?.paging?.next?.after ?? null;
+    } while (after);
+    return forms;
+  }
+
   async properties(objectType) {
     const data = await this.request(`/crm/v3/properties/${objectType}`);
     return data?.results ?? [];
@@ -754,6 +784,181 @@ export async function attributionAudit(client) {
   };
 }
 
+export const LEAD_SOURCE_PROPERTIES = [
+  "createdate",
+  "hs_analytics_source",
+  "hs_analytics_source_data_1",
+  "hs_analytics_source_data_2",
+  "hs_object_source",
+  "hs_object_source_label",
+  "hs_object_source_id",
+  "hs_object_source_detail_1",
+  "hs_object_source_detail_2",
+  "hs_object_source_detail_3",
+  "hs_latest_source",
+  "hs_latest_source_data_1",
+  "hs_latest_source_data_2",
+  "hs_facebook_ad_clicked",
+  "hs_facebook_click_id",
+  "hs_google_click_id",
+  "hs_analytics_first_touch_converting_campaign",
+  "hs_analytics_last_touch_converting_campaign",
+  "utm_source",
+  "utm_medium",
+  "utm_campaign",
+  "lead_source",
+  "source",
+  "lifecyclestage",
+  "hubspot_owner_id",
+];
+
+const INGEST_PATH_PROBES = [
+  ["forms", "/marketing/v3/forms/?limit=1"],
+  ["adsAccountsMarketingV3", "/marketing/v3/ads/accounts"],
+  ["adsAccountsV3", "/ads/v3/accounts"],
+  ["adsAccountsV1", "/ads/v1/ad-accounts"],
+  ["adsCampaignsV3", "/ads/v3/campaigns"],
+  ["marketingCampaigns", "/marketing/v3/campaigns?limit=1"],
+  ["marketingEvents", "/marketing/v3/marketing-events/events?limit=1"],
+  ["workflows", "/automation/v4/flows?limit=1"],
+];
+
+// ponytail: a flat cap is enough here. Distributions are for human review, and the tail
+// of a source distribution is per-submission GUIDs, which must not reach committed evidence.
+const DISTRIBUTION_CAP = 40;
+
+export function distributionOf(records, keyFn, cap = DISTRIBUTION_CAP) {
+  const counts = {};
+  for (const record of records) {
+    const key = keyFn(record.properties ?? {});
+    increment(counts, key === undefined || key === null || key === "" ? "(blank)" : String(key));
+  }
+  const ranked = Object.entries(counts).sort(([, left], [, right]) => right - left);
+  if (ranked.length <= cap) return Object.fromEntries(ranked);
+  const kept = ranked.slice(0, cap);
+  const tail = ranked.slice(cap);
+  const tailTotal = tail.reduce((sum, [, value]) => sum + value, 0);
+  kept.push([`(other: ${tail.length} distinct values withheld)`, roundWhole(tailTotal)]);
+  return Object.fromEntries(kept);
+}
+
+export function easternDay(isoValue) {
+  if (!isoValue) return "(blank)";
+  const parsed = new Date(isoValue);
+  if (Number.isNaN(parsed.getTime())) return "(blank)";
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: REPORTING_TIMEZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(parsed);
+}
+
+export function summarizeForms(forms) {
+  return forms
+    .map((form) => ({
+      id: String(form.id ?? ""),
+      name: form.name ?? "(unnamed)",
+      formType: form.formType ?? "(unknown)",
+      archived: Boolean(form.archived),
+      createdAt: form.createdAt ?? null,
+      updatedAt: form.updatedAt ?? null,
+    }))
+    .sort((left, right) => left.name.localeCompare(right.name));
+}
+
+export async function leadSourceAudit(client, options = {}) {
+  const identity = await client.validatePortal();
+  const hasExplicitWindow = Number.isFinite(options.startMs) && Number.isFinite(options.endMs);
+  const window = hasExplicitWindow
+    ? {
+      timezone: options.timezone || REPORTING_TIMEZONE,
+      startMs: Number(options.startMs),
+      endMs: Number(options.endMs),
+      startAt: new Date(Number(options.startMs)).toISOString(),
+      endAt: new Date(Number(options.endMs)).toISOString(),
+    }
+    : defaultReportingWindow();
+
+  const schema = await client.properties("contacts");
+  const available = new Set(schema.map((property) => property.name));
+  const requestedProperties = LEAD_SOURCE_PROPERTIES.filter((name) => available.has(name));
+  const missingProperties = LEAD_SOURCE_PROPERTIES.filter((name) => !available.has(name));
+
+  const contacts = await client.searchAll("contacts", {
+    filters: createdateWindowFilters(window.startMs, window.endMs),
+    properties: requestedProperties,
+  });
+
+  const property = (name) => (properties) => properties[name];
+  const combine = (...names) => (properties) => names
+    .map((name) => properties[name] || "(blank)")
+    .join(" || ");
+
+  const distributions = {
+    byCreatedDayEastern: distributionOf(contacts, (properties) => easternDay(properties.createdate)),
+    byAnalyticsSource: distributionOf(contacts, property("hs_analytics_source")),
+    byAnalyticsSourceData1: distributionOf(contacts, property("hs_analytics_source_data_1")),
+    byAnalyticsSourceData2: distributionOf(contacts, property("hs_analytics_source_data_2")),
+    byObjectSourceLabel: distributionOf(contacts, property("hs_object_source_label")),
+    byObjectSource: distributionOf(contacts, property("hs_object_source")),
+    byObjectSourceId: distributionOf(contacts, property("hs_object_source_id")),
+    byObjectSourceDetail1: distributionOf(contacts, property("hs_object_source_detail_1")),
+    byObjectSourceDetail2: distributionOf(contacts, property("hs_object_source_detail_2")),
+    byObjectSourceDetail3: distributionOf(contacts, property("hs_object_source_detail_3")),
+    byLatestSource: distributionOf(contacts, property("hs_latest_source")),
+    byLatestSourceData1: distributionOf(contacts, property("hs_latest_source_data_1")),
+    byLatestSourceData2: distributionOf(contacts, property("hs_latest_source_data_2")),
+    byUtmCampaign: distributionOf(contacts, property("utm_campaign")),
+    byFirstTouchCampaign: distributionOf(contacts, property("hs_analytics_first_touch_converting_campaign")),
+    byLifecycleStage: distributionOf(contacts, property("lifecyclestage")),
+    byOwnerId: distributionOf(contacts, (properties) => properties.hubspot_owner_id || "(unassigned)"),
+    bySourceLabelAndDetail: distributionOf(
+      contacts,
+      combine("hs_object_source_label", "hs_object_source_detail_1", "hs_object_source_detail_2"),
+    ),
+    byAnalyticsSourceChain: distributionOf(
+      contacts,
+      combine("hs_analytics_source", "hs_analytics_source_data_1", "hs_analytics_source_data_2"),
+    ),
+    paidSocialByFormAndCampaign: distributionOf(
+      contacts.filter((contact) => (contact.properties ?? {}).hs_analytics_source === "PAID_SOCIAL"),
+      combine("hs_object_source_label", "hs_object_source_detail_1", "hs_analytics_source_data_2"),
+    ),
+    formSourcedByIdAndName: distributionOf(
+      contacts.filter((contact) => (contact.properties ?? {}).hs_object_source_label === "FORM"),
+      combine("hs_object_source_id", "hs_object_source_detail_1", "hs_analytics_source"),
+    ),
+  };
+
+  const ingestPathProbes = [];
+  for (const [name, endpoint] of INGEST_PATH_PROBES) {
+    ingestPathProbes.push(await client.probe(name, endpoint, false));
+  }
+
+  const forms = await countedResult(async () => summarizeForms(await client.listForms()));
+
+  return {
+    generatedAt: timestamp(),
+    mode: "read-only lead-source ingest audit",
+    piiIncluded: false,
+    identity,
+    window,
+    contactsCreatedInWindow: roundWhole(contacts.length),
+    requestedProperties,
+    missingProperties,
+    distributions,
+    forms,
+    ingestPathProbes,
+    limitations: [
+      "No contact names, emails, phone numbers, or record IDs are emitted; only aggregate counts and non-secret configuration metadata.",
+      "HubSpot exposes no read API for the Facebook lead-ads form-selection setting; that must be confirmed in the HubSpot UI.",
+      "Search API paging caps at 10,000 records; a larger window would need date slicing.",
+      "Contact-source properties describe how HubSpot recorded the record, not an approved business attribution.",
+    ],
+  };
+}
+
 async function contextManifest({ full = false } = {}) {
   const names = (await fs.readdir(knowledgeRoot))
     .filter((name) => name.endsWith(".md"))
@@ -816,6 +1021,10 @@ async function main() {
     case "schema-audit":
       result = await schemaAudit(client);
       outputPath = await writeOutput("schema-audits", result);
+      break;
+    case "lead-source-audit":
+      result = await leadSourceAudit(client, windowOptionsFromArgs(options));
+      outputPath = await writeOutput("lead-source-audits", result);
       break;
     case "attribution-audit":
       result = await attributionAudit(client);
