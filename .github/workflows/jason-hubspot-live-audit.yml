@@ -1,6 +1,10 @@
 name: Jason HubSpot Live Audit
 
 on:
+  schedule:
+    # Weekday daily-health at 12:00 UTC (07:00-08:00 America/New_York).
+    # Scheduled runs carry no inputs, so the job defaults to daily-health.
+    - cron: "0 12 * * 1-5"
   workflow_dispatch:
     inputs:
       command:
@@ -15,6 +19,7 @@ on:
           - daily-health
           - snapshot
           - schema-audit
+          - lead-source-audit
           - attribution-audit
 
 permissions:
@@ -31,6 +36,7 @@ jobs:
     timeout-minutes: 20
     env:
       JASON_HUBSPOT_PRIVATE_APP_TOKEN: ${{ secrets.JASON_HUBSPOT_PRIVATE_APP_TOKEN }}
+      AUDIT_COMMAND: ${{ inputs.command || 'daily-health' }}
 
     steps:
       - name: Check out agent
@@ -57,7 +63,7 @@ jobs:
             throw "Portal readiness verification failed."
           }
 
-          switch ("${{ inputs.command }}") {
+          switch ("$env:AUDIT_COMMAND") {
             "all" {
               node .\agent\jason-hubspot-agent.mjs snapshot
               if ($LASTEXITCODE -ne 0) { throw "Snapshot failed." }
@@ -67,6 +73,8 @@ jobs:
               if ($LASTEXITCODE -ne 0) { throw "Daily health failed." }
               node .\agent\jason-hubspot-agent.mjs schema-audit
               if ($LASTEXITCODE -ne 0) { throw "Schema audit failed." }
+              node .\agent\jason-hubspot-agent.mjs lead-source-audit
+              if ($LASTEXITCODE -ne 0) { throw "Lead source audit failed." }
               node .\agent\jason-hubspot-agent.mjs attribution-audit
               if ($LASTEXITCODE -ne 0) { throw "Attribution audit failed." }
             }
@@ -86,6 +94,10 @@ jobs:
               node .\agent\jason-hubspot-agent.mjs schema-audit
               if ($LASTEXITCODE -ne 0) { throw "Schema audit failed." }
             }
+            "lead-source-audit" {
+              node .\agent\jason-hubspot-agent.mjs lead-source-audit
+              if ($LASTEXITCODE -ne 0) { throw "Lead source audit failed." }
+            }
             "attribution-audit" {
               node .\agent\jason-hubspot-agent.mjs attribution-audit
               if ($LASTEXITCODE -ne 0) { throw "Attribution audit failed." }
@@ -98,7 +110,7 @@ jobs:
       - name: Upload aggregate audit outputs
         uses: actions/upload-artifact@v4
         with:
-          name: jason-hubspot-${{ inputs.command }}-${{ github.run_id }}
+          name: jason-hubspot-${{ inputs.command || 'daily-health' }}-${{ github.run_id }}
           path: outputs/
           if-no-files-found: error
           retention-days: 14
