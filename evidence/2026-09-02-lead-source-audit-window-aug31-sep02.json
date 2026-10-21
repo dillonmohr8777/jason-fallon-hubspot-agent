@@ -1,0 +1,475 @@
+{
+  "generatedAt": "2026-09-03T02:01:54.555Z",
+  "mode": "read-only lead-source ingest audit",
+  "piiIncluded": false,
+  "identity": {
+    "valid": true,
+    "account": "Jason Fallon / Momentum 360",
+    "portalId": "50612503",
+    "appId": null,
+    "userId": null,
+    "scopes": [],
+    "credentialSource": "dpapi:C:\\Users\\dillo\\Documents\\Codex\\2026-07-12\\hubspot-agent-set-jasonhubspottoken-ps1-hubspot\\hubspot-agent\\.secrets\\jason-hubspot-token.dpapi",
+    "verifiedAt": "2026-09-03T02:01:52.796Z"
+  },
+  "window": {
+    "timezone": "America/New_York",
+    "startMs": 1788148800000,
+    "endMs": 1788403500000,
+    "startAt": "2026-08-31T04:00:00.000Z",
+    "endAt": "2026-09-03T02:45:00.000Z"
+  },
+  "contactsCreatedInWindow": 69,
+  "requestedProperties": [
+    "createdate",
+    "hs_analytics_source",
+    "hs_analytics_source_data_1",
+    "hs_analytics_source_data_2",
+    "hs_object_source",
+    "hs_object_source_label",
+    "hs_object_source_id",
+    "hs_object_source_detail_1",
+    "hs_object_source_detail_2",
+    "hs_object_source_detail_3",
+    "hs_latest_source",
+    "hs_latest_source_data_1",
+    "hs_latest_source_data_2",
+    "hs_facebook_ad_clicked",
+    "hs_facebook_click_id",
+    "hs_google_click_id",
+    "hs_analytics_first_touch_converting_campaign",
+    "hs_analytics_last_touch_converting_campaign",
+    "utm_source",
+    "utm_medium",
+    "utm_campaign",
+    "lead_source",
+    "source",
+    "lifecyclestage",
+    "hubspot_owner_id"
+  ],
+  "missingProperties": [],
+  "distributions": {
+    "byCreatedDayEastern": {
+      "2026-08-31": 26,
+      "2026-09-01": 24,
+      "2026-09-02": 19
+    },
+    "byAnalyticsSource": {
+      "OTHER_CAMPAIGNS": 30,
+      "PAID_SOCIAL": 18,
+      "OFFLINE": 15,
+      "DIRECT_TRAFFIC": 4,
+      "ORGANIC_SEARCH": 2
+    },
+    "byAnalyticsSourceData1": {
+      "(blank)": 30,
+      "Facebook": 18,
+      "CRM_UI": 10,
+      "INTEGRATION": 3,
+      "Unknown keywords (SSL)": 2,
+      "PAYMENTS": 2,
+      "www.momentumvirtualtours.com/garage-door-marketing-philadelphia": 2,
+      "www.momentumvirtualtours.com/portfolio": 1,
+      "share.hsforms.com/2dpvektx_qjyilgbxgykj9gu4suv": 1
+    },
+    "byAnalyticsSourceData2": {
+      "236006": 3,
+      "(blank)": 34,
+      "userId:84251086": 8,
+      "alexandra - 360 - leads campaign - aug": 7,
+      "leads campaign - alexandra - test - seo lead form": 5,
+      "new leads campaign: website mel aug test": 3,
+      "GOOGLE": 2,
+      "userId:84251079": 2,
+      "Payments Customer Contact Creator": 2,
+      "suspension_testing_adset_budget_2026": 1,
+      "competitor audit general leads": 1,
+      "organic facebook lead": 1
+    },
+    "byObjectSourceLabel": {
+      "INTEGRATION": 33,
+      "FORM": 22,
+      "CRM_UI": 11,
+      "PAYMENTS": 2,
+      "CONVERSATIONS": 1
+    },
+    "byObjectSource": {
+      "INTEGRATION": 33,
+      "FORM": 22,
+      "CRM_UI": 11,
+      "PAYMENTS": 2,
+      "CONVERSATIONS": 1
+    },
+    "byObjectSourceId": {
+      "28280": 30,
+      "236006": 3,
+      "userId:84251086": 8,
+      "userId:84251079": 3,
+      "Payments Customer Contact Creator": 2,
+      "f5343f27-e813-4597-aacd-fe6244f1915d": 1,
+      "cd048658-f55b-47b0-8a56-e7942c3a356d": 1,
+      "f3554f1d-df7e-4cde-9699-e71565943086": 1,
+      "49739b37-79f9-43b5-a51f-5082abf397e1": 1,
+      "1dce9998-2123-48cb-b0de-9d5af366bb28": 1,
+      "f3948e1e-a2e3-4f40-9c9e-ef1ca9726e40": 1,
+      "e74b389b-b3e0-4313-9f81-421f40ccd9e7": 1,
+      "e825b557-cd2d-4fae-9199-07d5c80ab3fd": 1,
+      "5b2ac021-714c-4f19-9cb0-6407874e0ad6": 1,
+      "6523236c-e202-4788-9900-4da30d6979a9": 1,
+      "38866c57-75e6-4664-bdfa-14d69949ed21": 1,
+      "aiAgentUserId:89602231;channelInstanceId:3551706676": 1,
+      "b4100ab8-f463-47d3-9c14-23c1201580f1": 1,
+      "41aeb5dd-8aa3-4a9b-aef1-2b41631c947b": 1,
+      "aa4181fd-3de4-4088-9236-2d29d9dc9e59": 1,
+      "67e3d207-829f-4e31-b9de-4afb48f0b622": 1,
+      "ff12016a-8e09-4881-9686-a3e312dccdc8": 1,
+      "b4f6ed61-fe71-4862-8d90-748327ef2696": 1,
+      "c3007d48-b55a-42f0-94d5-2d1b61696c36": 1,
+      "d4bf708e-8293-4bc1-9c3f-3dd288d48c5c": 1,
+      "42bc8311-9f8d-4f9b-b80a-d3c36ba3a052": 1,
+      "5659f426-21b5-448f-b890-5a69d8221819": 1,
+      "656870aa-d4f7-4d96-a1f2-4503313c9212": 1
+    },
+    "byObjectSourceDetail1": {
+      "CallRail": 30,
+      "(blank)": 14,
+      "July - Alexandra - Form #3 - 360": 6,
+      "July - Alexandra - Form-2": 5,
+      "Square": 3,
+      "2026_Mel BOOK YOUR FREE CALL-WEBSITE REDESIGN": 3,
+      ".elementor-form": 2,
+      "Google Business Profile Suspended? We Can Help. 🚨-copy-copy": 1,
+      ".elementor-form, .elementor-form-waiting": 1,
+      "Garage Door PPC - Landing Page Form": 1,
+      "Competitor Audit -Verify Number-Mac calendly": 1,
+      "Local Visibility Leads Form-Verify Number- Mac schedule link": 1,
+      "Credit Card Authorization Form": 1
+    },
+    "byObjectSourceDetail2": {
+      "(blank)": 69
+    },
+    "byObjectSourceDetail3": {
+      "(blank)": 69
+    },
+    "byLatestSource": {
+      "OFFLINE": 44,
+      "PAID_SOCIAL": 18,
+      "DIRECT_TRAFFIC": 6,
+      "ORGANIC_SEARCH": 1
+    },
+    "byLatestSourceData1": {
+      "INTEGRATION": 33,
+      "Facebook": 18,
+      "CRM_UI": 9,
+      "www.momentumvirtualtours.com/garage-door-marketing-philadelphia": 3,
+      "PAYMENTS": 2,
+      "www.momentumvirtualtours.com/contact": 1,
+      "Unknown keywords (SSL)": 1,
+      "share.hsforms.com/2ulvwrv-wrrym7ppwhpzjcau4suv": 1,
+      "share.hsforms.com/2dpvektx_qjyilgbxgykj9gu4suv": 1
+    },
+    "byLatestSourceData2": {
+      "28280": 30,
+      "236006": 3,
+      "userId:84251086": 7,
+      "alexandra - 360 - leads campaign - aug": 7,
+      "(blank)": 6,
+      "leads campaign - alexandra - test - seo lead form": 5,
+      "new leads campaign: website mel aug test": 3,
+      "userId:84251079": 2,
+      "Payments Customer Contact Creator": 2,
+      "suspension_testing_adset_budget_2026": 1,
+      "GOOGLE": 1,
+      "competitor audit general leads": 1,
+      "organic facebook lead": 1
+    },
+    "byUtmCampaign": {
+      "(blank)": 69
+    },
+    "byFirstTouchCampaign": {
+      "(blank)": 68,
+      "e26f58ab-2fb1-4a57-ad3f-8951f22f7ff6": 1
+    },
+    "byLifecycleStage": {
+      "lead": 59,
+      "opportunity": 5,
+      "customer": 4,
+      "other": 1
+    },
+    "byOwnerId": {
+      "84251079": 5,
+      "84251086": 7,
+      "89450164": 1,
+      "(unassigned)": 56
+    },
+    "bySourceLabelAndDetail": {
+      "INTEGRATION || CallRail || (blank)": 30,
+      "CRM_UI || (blank) || (blank)": 11,
+      "FORM || July - Alexandra - Form #3 - 360 || (blank)": 6,
+      "FORM || July - Alexandra - Form-2 || (blank)": 5,
+      "INTEGRATION || Square || (blank)": 3,
+      "FORM || 2026_Mel BOOK YOUR FREE CALL-WEBSITE REDESIGN || (blank)": 3,
+      "FORM || .elementor-form || (blank)": 2,
+      "PAYMENTS || (blank) || (blank)": 2,
+      "FORM || Google Business Profile Suspended? We Can Help. 🚨-copy-copy || (blank)": 1,
+      "CONVERSATIONS || (blank) || (blank)": 1,
+      "FORM || .elementor-form, .elementor-form-waiting || (blank)": 1,
+      "FORM || Garage Door PPC - Landing Page Form || (blank)": 1,
+      "FORM || Competitor Audit -Verify Number-Mac calendly || (blank)": 1,
+      "FORM || Local Visibility Leads Form-Verify Number- Mac schedule link || (blank)": 1,
+      "FORM || Credit Card Authorization Form || (blank)": 1
+    },
+    "byAnalyticsSourceChain": {
+      "OTHER_CAMPAIGNS || (blank) || (blank)": 30,
+      "OFFLINE || CRM_UI || userId:84251086": 8,
+      "PAID_SOCIAL || Facebook || alexandra - 360 - leads campaign - aug": 7,
+      "PAID_SOCIAL || Facebook || leads campaign - alexandra - test - seo lead form": 5,
+      "OFFLINE || INTEGRATION || 236006": 3,
+      "PAID_SOCIAL || Facebook || new leads campaign: website mel aug test": 3,
+      "ORGANIC_SEARCH || Unknown keywords (SSL) || GOOGLE": 2,
+      "OFFLINE || CRM_UI || userId:84251079": 2,
+      "OFFLINE || PAYMENTS || Payments Customer Contact Creator": 2,
+      "DIRECT_TRAFFIC || www.momentumvirtualtours.com/garage-door-marketing-philadelphia || (blank)": 2,
+      "DIRECT_TRAFFIC || www.momentumvirtualtours.com/portfolio || (blank)": 1,
+      "PAID_SOCIAL || Facebook || suspension_testing_adset_budget_2026": 1,
+      "PAID_SOCIAL || Facebook || competitor audit general leads": 1,
+      "PAID_SOCIAL || Facebook || organic facebook lead": 1,
+      "DIRECT_TRAFFIC || share.hsforms.com/2dpvektx_qjyilgbxgykj9gu4suv || (blank)": 1
+    },
+    "paidSocialByFormAndCampaign": {
+      "FORM || July - Alexandra - Form #3 - 360 || alexandra - 360 - leads campaign - aug": 6,
+      "FORM || July - Alexandra - Form-2 || leads campaign - alexandra - test - seo lead form": 5,
+      "FORM || 2026_Mel BOOK YOUR FREE CALL-WEBSITE REDESIGN || new leads campaign: website mel aug test": 3,
+      "FORM || Google Business Profile Suspended? We Can Help. 🚨-copy-copy || suspension_testing_adset_budget_2026": 1,
+      "FORM || Competitor Audit -Verify Number-Mac calendly || competitor audit general leads": 1,
+      "FORM || Local Visibility Leads Form-Verify Number- Mac schedule link || organic facebook lead": 1,
+      "CRM_UI || (blank) || alexandra - 360 - leads campaign - aug": 1
+    },
+    "formSourcedByIdAndName": {
+      "f5343f27-e813-4597-aacd-fe6244f1915d || .elementor-form || ORGANIC_SEARCH": 1,
+      "cd048658-f55b-47b0-8a56-e7942c3a356d || July - Alexandra - Form #3 - 360 || PAID_SOCIAL": 1,
+      "f3554f1d-df7e-4cde-9699-e71565943086 || July - Alexandra - Form #3 - 360 || PAID_SOCIAL": 1,
+      "49739b37-79f9-43b5-a51f-5082abf397e1 || .elementor-form || DIRECT_TRAFFIC": 1,
+      "1dce9998-2123-48cb-b0de-9d5af366bb28 || 2026_Mel BOOK YOUR FREE CALL-WEBSITE REDESIGN || PAID_SOCIAL": 1,
+      "f3948e1e-a2e3-4f40-9c9e-ef1ca9726e40 || July - Alexandra - Form #3 - 360 || PAID_SOCIAL": 1,
+      "e74b389b-b3e0-4313-9f81-421f40ccd9e7 || July - Alexandra - Form-2 || PAID_SOCIAL": 1,
+      "e825b557-cd2d-4fae-9199-07d5c80ab3fd || Google Business Profile Suspended? We Can Help. 🚨-copy-copy || PAID_SOCIAL": 1,
+      "5b2ac021-714c-4f19-9cb0-6407874e0ad6 || July - Alexandra - Form-2 || PAID_SOCIAL": 1,
+      "6523236c-e202-4788-9900-4da30d6979a9 || July - Alexandra - Form #3 - 360 || PAID_SOCIAL": 1,
+      "38866c57-75e6-4664-bdfa-14d69949ed21 || July - Alexandra - Form-2 || PAID_SOCIAL": 1,
+      "b4100ab8-f463-47d3-9c14-23c1201580f1 || July - Alexandra - Form #3 - 360 || PAID_SOCIAL": 1,
+      "41aeb5dd-8aa3-4a9b-aef1-2b41631c947b || July - Alexandra - Form #3 - 360 || PAID_SOCIAL": 1,
+      "aa4181fd-3de4-4088-9236-2d29d9dc9e59 || .elementor-form, .elementor-form-waiting || DIRECT_TRAFFIC": 1,
+      "67e3d207-829f-4e31-b9de-4afb48f0b622 || Garage Door PPC - Landing Page Form || DIRECT_TRAFFIC": 1,
+      "ff12016a-8e09-4881-9686-a3e312dccdc8 || July - Alexandra - Form-2 || PAID_SOCIAL": 1,
+      "b4f6ed61-fe71-4862-8d90-748327ef2696 || Competitor Audit -Verify Number-Mac calendly || PAID_SOCIAL": 1,
+      "c3007d48-b55a-42f0-94d5-2d1b61696c36 || 2026_Mel BOOK YOUR FREE CALL-WEBSITE REDESIGN || PAID_SOCIAL": 1,
+      "d4bf708e-8293-4bc1-9c3f-3dd288d48c5c || 2026_Mel BOOK YOUR FREE CALL-WEBSITE REDESIGN || PAID_SOCIAL": 1,
+      "42bc8311-9f8d-4f9b-b80a-d3c36ba3a052 || Local Visibility Leads Form-Verify Number- Mac schedule link || PAID_SOCIAL": 1,
+      "5659f426-21b5-448f-b890-5a69d8221819 || July - Alexandra - Form-2 || PAID_SOCIAL": 1,
+      "656870aa-d4f7-4d96-a1f2-4503313c9212 || Credit Card Authorization Form || DIRECT_TRAFFIC": 1
+    }
+  },
+  "forms": [
+    {
+      "id": "2c94ec73-56d5-41d0-b63a-4218d2163e20",
+      "name": "Access & Logins Form",
+      "formType": "hubspot",
+      "archived": false,
+      "createdAt": "2026-02-27T13:30:45.014Z",
+      "updatedAt": "2026-02-27T13:37:10.111Z"
+    },
+    {
+      "id": "2cf31fb7-63d8-4569-a4e2-8d87ad9a16df",
+      "name": "Call Tracking Email",
+      "formType": "hubspot",
+      "archived": false,
+      "createdAt": "2026-03-06T05:12:06.761Z",
+      "updatedAt": "2026-03-06T05:12:06.761Z"
+    },
+    {
+      "id": "a5bb464b-fb4d-4192-b335-66874693a809",
+      "name": "Call Tracking Email",
+      "formType": "hubspot",
+      "archived": false,
+      "createdAt": "2026-03-06T05:12:06.756Z",
+      "updatedAt": "2026-03-06T05:12:06.756Z"
+    },
+    {
+      "id": "74f55e29-35ff-409c-8894-66f1198909f6",
+      "name": "Credit Card Authorization Form",
+      "formType": "hubspot",
+      "archived": false,
+      "createdAt": "2026-02-27T13:37:41.523Z",
+      "updatedAt": "2026-02-27T13:45:03.828Z"
+    },
+    {
+      "id": "352307f4-ea41-4500-9ba3-f132a2d0b2bb",
+      "name": "Form Capture",
+      "formType": "hubspot",
+      "archived": false,
+      "createdAt": "2026-03-06T05:12:06.590Z",
+      "updatedAt": "2026-04-27T18:39:56.762Z"
+    },
+    {
+      "id": "59c30197-0e55-466c-9e91-770b4a24da58",
+      "name": "Form Capture",
+      "formType": "hubspot",
+      "archived": false,
+      "createdAt": "2026-03-06T05:12:06.590Z",
+      "updatedAt": "2026-03-06T05:12:06.590Z"
+    },
+    {
+      "id": "5103436a-0551-4787-bb5d-c69e656f4569",
+      "name": "Garage Door PPC - Landing Page Form",
+      "formType": "hubspot",
+      "archived": false,
+      "createdAt": "2026-08-24T15:44:30.911Z",
+      "updatedAt": "2026-09-02T15:42:13.158Z"
+    },
+    {
+      "id": "525bf045-5fb0-451c-8cec-f3f01e9ce370",
+      "name": "GBP Reinstatement Documentation Needed",
+      "formType": "hubspot",
+      "archived": false,
+      "createdAt": "2025-12-19T02:48:04.006Z",
+      "updatedAt": "2026-02-27T19:54:38.151Z"
+    },
+    {
+      "id": "030566ba-72b9-462b-b5cb-66584c17fa33",
+      "name": "Google Ads Onboarding",
+      "formType": "hubspot",
+      "archived": false,
+      "createdAt": "2026-08-19T18:24:56.597Z",
+      "updatedAt": "2026-08-19T18:31:59.127Z"
+    },
+    {
+      "id": "aba6cfa6-e9b7-4168-98fd-fbaaf825c4a6",
+      "name": "Google Merchant Account Intake Form",
+      "formType": "hubspot",
+      "archived": false,
+      "createdAt": "2026-03-13T18:30:36.220Z",
+      "updatedAt": "2026-03-13T18:34:16.801Z"
+    },
+    {
+      "id": "05b5338f-be67-4bea-a353-05a6ac288c22",
+      "name": "Google Review Form",
+      "formType": "hubspot",
+      "archived": false,
+      "createdAt": "2026-06-05T19:09:38.589Z",
+      "updatedAt": "2026-06-05T19:51:09.741Z"
+    },
+    {
+      "id": "0839edec-df4b-4b11-9863-a44942ba8e8a",
+      "name": "Leadify Lead Submission",
+      "formType": "hubspot",
+      "archived": false,
+      "createdAt": "2026-01-23T19:50:14.786Z",
+      "updatedAt": "2026-02-19T06:17:03.247Z"
+    },
+    {
+      "id": "0a55e834-4f6d-46dc-a383-f745c82651d8",
+      "name": "New blank form (August 24, 2026 11:41:42 AM EDT)",
+      "formType": "hubspot",
+      "archived": false,
+      "createdAt": "2026-08-24T15:41:42.070Z",
+      "updatedAt": "2026-08-24T15:41:42.070Z"
+    },
+    {
+      "id": "a35dd2b0-ac19-4f71-9d56-ce251537f763",
+      "name": "New contact us form (March 13, 2026 11:40:51 AM EDT)",
+      "formType": "hubspot",
+      "archived": false,
+      "createdAt": "2026-03-13T15:40:51.680Z",
+      "updatedAt": "2026-07-02T15:10:04.525Z"
+    },
+    {
+      "id": "dabfc82e-e2a8-40aa-a9e5-b5ca886791f8",
+      "name": "New form (March 31, 2026 2:26:21 PM EDT)",
+      "formType": "hubspot",
+      "archived": false,
+      "createdAt": "2026-03-31T18:26:21.083Z",
+      "updatedAt": "2026-03-31T18:26:21.083Z"
+    },
+    {
+      "id": "0ceb7205-79b6-47aa-9fac-698ad63776e6",
+      "name": "Voice Assist message taken",
+      "formType": "hubspot",
+      "archived": false,
+      "createdAt": "2026-03-06T05:12:06.921Z",
+      "updatedAt": "2026-03-06T05:12:06.921Z"
+    },
+    {
+      "id": "30ea2be7-5b44-41cf-87ad-2206607d9e8e",
+      "name": "Voice Assist message taken",
+      "formType": "hubspot",
+      "archived": false,
+      "createdAt": "2026-03-06T05:12:06.931Z",
+      "updatedAt": "2026-03-06T05:12:06.931Z"
+    }
+  ],
+  "ingestPathProbes": [
+    {
+      "name": "forms",
+      "required": false,
+      "ok": true,
+      "latencyMs": 393,
+      "visibleCount": 1
+    },
+    {
+      "name": "adsAccountsMarketingV3",
+      "required": false,
+      "ok": false,
+      "latencyMs": 87,
+      "error": "HubSpot 404: Not Found"
+    },
+    {
+      "name": "adsAccountsV3",
+      "required": false,
+      "ok": false,
+      "latencyMs": 134,
+      "error": "HubSpot 404: Not Found"
+    },
+    {
+      "name": "adsAccountsV1",
+      "required": false,
+      "ok": false,
+      "latencyMs": 80,
+      "error": "HubSpot 404: Not Found"
+    },
+    {
+      "name": "adsCampaignsV3",
+      "required": false,
+      "ok": false,
+      "latencyMs": 74,
+      "error": "HubSpot 404: Not Found"
+    },
+    {
+      "name": "marketingCampaigns",
+      "required": false,
+      "ok": false,
+      "latencyMs": 81,
+      "error": "HubSpot 403 MISSING_SCOPES: This app hasn't been granted all required scopes to make this call. Read more about required scopes here: https://developers.hubspot.com/scopes."
+    },
+    {
+      "name": "marketingEvents",
+      "required": false,
+      "ok": false,
+      "latencyMs": 94,
+      "error": "HubSpot 405: Method Not Allowed"
+    },
+    {
+      "name": "workflows",
+      "required": false,
+      "ok": true,
+      "latencyMs": 310,
+      "visibleCount": 1
+    }
+  ],
+  "limitations": [
+    "No contact names, emails, phone numbers, or record IDs are emitted; only aggregate counts and non-secret configuration metadata.",
+    "HubSpot exposes no read API for the Facebook lead-ads form-selection setting; that must be confirmed in the HubSpot UI.",
+    "Search API paging caps at 10,000 records; a larger window would need date slicing.",
+    "Contact-source properties describe how HubSpot recorded the record, not an approved business attribution."
+  ]
+}

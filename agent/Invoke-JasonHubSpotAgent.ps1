@@ -1,6 +1,6 @@
 param(
   [Parameter(Position = 0)]
-  [ValidateSet("context", "check-token", "verify-ready", "window-report", "daily-health", "snapshot", "schema-audit", "attribution-audit")]
+  [ValidateSet("context", "check-token", "verify-ready", "window-report", "daily-health", "snapshot", "schema-audit", "attribution-audit", "lead-source-audit")]
   [string]$Command = "verify-ready",
 
   [Parameter(ValueFromRemainingArguments = $true)]
